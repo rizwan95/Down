@@ -188,6 +188,8 @@ extension AttributedStringVisitor: Visitor {
                 }
                 let attachment = NSTextAttachment(data: data, ofType: attachmentType)
                 s.append(NSAttributedString(attachment: attachment))
+                self.styler.style(image: s, title: node.title, url: node.url)
+
             }.resume()
         }
         
@@ -195,7 +197,6 @@ extension AttributedStringVisitor: Visitor {
         
         
         #endif
-        styler.style(image: s, title: node.title, url: node.url)
         return s
     }
 }
