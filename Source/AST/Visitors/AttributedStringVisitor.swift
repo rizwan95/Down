@@ -188,7 +188,7 @@ extension AttributedStringVisitor: Visitor {
                 }
                 let attachment = NSTextAttachment(data: data, ofType: attachmentType)
                 s.append(NSAttributedString(attachment: attachment))
-            }
+            }.resume()
         }
         
         
