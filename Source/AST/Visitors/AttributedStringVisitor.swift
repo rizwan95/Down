@@ -169,6 +169,25 @@ extension AttributedStringVisitor: Visitor {
     
     public func visit(image node: Image) -> NSMutableAttributedString {
         let s = visitChildren(of: node).joined
+        #if os(iOS)        //Limited to iOS here due to CoreServices (UTType) and UIKit (NSTextAttachment) requirements
+        if let urlString = node.url,
+            let url = URL(string: urlString),
+            let imageData = try? Data(contentsOf: url) {
+            let attachmentType: String?
+            if url.pathExtension.isEmpty {
+                if urlString.contains("image/gif") {
+                    attachmentType = "com.compuserve.gif"
+                } else {
+                    attachmentType = nil
+                }
+            } else {
+                let pathExtension = url.pathExtension as CFString
+                attachmentType = UTTypeCreatePreferredIdentifierForTag(kUTTagClassFilenameExtension, pathExtension, nil)?.takeRetainedValue() as String?
+            }
+            let attachment = NSTextAttachment(data: imageData, ofType: attachmentType)
+            s.append(NSAttributedString(attachment: attachment))
+        }
+        #endif
         styler.style(image: s, title: node.title, url: node.url)
         return s
     }
