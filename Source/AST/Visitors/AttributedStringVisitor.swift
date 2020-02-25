@@ -8,6 +8,7 @@
 #if !os(Linux)
 
 import Foundation
+import MobileCoreServices
 
 /// This class is used to generated an `NSMutableAttributedString` from the abstract syntax
 /// tree produced by a markdown string. It traverses the tree to construct substrings
