@@ -9,6 +9,7 @@
 
 import Foundation
 import MobileCoreServices
+import UIKit
 
 /// This class is used to generated an `NSMutableAttributedString` from the abstract syntax
 /// tree produced by a markdown string. It traverses the tree to construct substrings
@@ -171,23 +172,28 @@ extension AttributedStringVisitor: Visitor {
     public func visit(image node: Image) -> NSMutableAttributedString {
         let s = visitChildren(of: node).joined
         #if os(iOS)        //Limited to iOS here due to CoreServices (UTType) and UIKit (NSTextAttachment) requirements
-        if let urlString = node.url,
-            let url = URL(string: urlString),
-            let imageData = try? Data(contentsOf: url) {
-            let attachmentType: String?
-            if url.pathExtension.isEmpty {
-                if urlString.contains("image/gif") {
-                    attachmentType = "com.compuserve.gif"
+        
+        if let urlString = node.url, let url = URL(string: urlString) {
+            URLSession.shared.dataTask(with: url) { (data, response, error) in
+                let attachmentType: String?
+                if url.pathExtension.isEmpty {
+                    if urlString.contains("image/gif") {
+                        attachmentType = "com.compuserve.gif"
+                    } else {
+                        attachmentType = nil
+                    }
                 } else {
-                    attachmentType = nil
+                    let pathExtension = url.pathExtension as CFString
+                    attachmentType = UTTypeCreatePreferredIdentifierForTag(kUTTagClassFilenameExtension, pathExtension, nil)?.takeRetainedValue() as String?
                 }
-            } else {
-                let pathExtension = url.pathExtension as CFString
-                attachmentType = UTTypeCreatePreferredIdentifierForTag(kUTTagClassFilenameExtension, pathExtension, nil)?.takeRetainedValue() as String?
+                let attachment = NSTextAttachment(data: data, ofType: attachmentType)
+                s.append(NSAttributedString(attachment: attachment))
             }
-            let attachment = NSTextAttachment(data: imageData, ofType: attachmentType)
-            s.append(NSAttributedString(attachment: attachment))
         }
+        
+        
+        
+        
         #endif
         styler.style(image: s, title: node.title, url: node.url)
         return s
